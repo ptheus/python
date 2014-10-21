@@ -84,6 +84,8 @@ def get_value(string):
     else:
         return ''
 def count():
+    widgets = ['Analysising: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
+    pbar = ProgressBar(widgets=widgets, maxval=100)
     file_end_flag = 1
     probar = 1
     print "Begin analysis the log, please waiting...\n"
@@ -112,41 +114,129 @@ def count():
     pbar.finish()
     
 def gather_result():
-    print "Begin gather the result, please waiting...\n"
+    widgets = ['Gather result: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
+    pbar = ProgressBar(widgets=widgets, maxval=len(gl.list_OK))
     pbar.start()
-    for cur_i in list_OK:
-        for cur_j in range(len(cur_i) - 2):
-            glb_line = glbline + get_value(cur_i[cur_j]) + '\t'
-        glb_line = glb_line + str(right_swich(cur_i[4]) - right_swich(cur_i[3])) + '\t\n'
+    diff_time = 0
+    glb_line = ''
+    for cur_i in range(len(gl.list_OK)):
+        for cur_j in range(len(gl.list_OK[cur_i]) - 2):
+            glb_line = glbline + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
+        diff_time = right_swich(gl.list_OK[cur_i][3]) - right_swich(gl.list_OK[cur_i][4])
+        if gl.max_time < diff_time:
+            gl.max_time = diff_time
+        if gl.min_time > diff_time:
+            gl.min_time = diff_time
+        gl.average_time += diff_time
+        glb_line = glb_line + str(diff_time) + '\t\n'
         tar_handle.write(glb_line)
         glb_line = ''
+        pbar.update(cur_i)
+    pbar.finish()
+    gl.average_time = gl.average_time / len(gl.list_OK)
+    print "--------------------------------"
+    print "%15s%d\n%15s%d\n%15s%d\n%15s%f" %("Total Number:",len(gl.list_OK),"Max_time:", gl.max_time,"Min_time:", gl.min_time,"Average_time:", gl.average_time)
+    print "--------------------------------"
     
     
     
-    
-    
-    
+# user input legal judgement
+if len(sys.argv) < 3:
+    usage()
+    sys.exit(-1)
+elif len(sys.argv) == 3:
+    if sys.argv[1]
+    if sys.argv[1] != "-m" and sys.argv[1] != "-f"and sys.argv[1] != "-i" and sys.argv[1] != "-o":
+        if os.path.isfile(sys.argv[1]):
+            input_file = sys.argv[1]
+            input_file_flag = 1
+        else:
+            print "Input file is not effective!"
+            sys.exit(-1)
+    else:
+        usage()
+        sys.exit(-1)
+else:
+    if sys.argv[1] == "-m" or sys.argv[1] == "-f"or sys.argv[1] == "-i" or sys.argv[1] == "-o":
+        rev_list = " ".join(sys.argv)
+        rev_list = rev_list[rev_list.find(" ") + 1:]
+        if rev_list.find("-i") < 0:
+            print "No Input File, Please Check..."
+            sys.exit(-1)
+    else:
+        if os.path.isfile(sys.argv[1]):
+            rev_list = " ".join(sys.argv)
+            input_tmp = rev_list[rev_list.find(" ") + 1:rev_list.find("-")-1]
+            if rev_list != sys.argv[1]:
+                print "Your input is more than one file name. please check..."
+                sys.exit(-1)
+            rev_list = rev_list[rev_list.find(" ") + 1:]
+            rev_list = rev_list[rev_list.find(" ") + 1:]
+            input_file = sys.argv[1]
+            input_file_flag = 1
+        else:
+            print "Your input file name is not exist. please check..."
+            sys.exit(-1)
+    if input_file_flag == 1 and rev_list.find("-i") >= 0:
+        print "Two input file. please check..."
+        sys.exit(-1)
+
+
+    if rev_list.find("-i") >= 0:
+        _i = rev_list[rev_list.find("-i") + 3:]
+        if _i.find("-") >= 0:
+            _i = _i[:_i.find("-") - 1]
+        if len(_i.split(' ')) == 1:
+            if os.path.isfile(_i):
+                input_file = _i
+            else:
+                print "File is not exist!"
+                sys.exit(-1)
+        else:
+            print "Error: -i follow wrong argument.\nYour input is more than one file name. please check..."
+            sys.exit(-1)
+    if rev_list.find("-o") >= 0:
+        _o = rev_list[rev_list.find("-o") + 3:]
+        if _o.find("-") >= 0:
+            _o = _o[:_o.find("-") - 1]
+        if len(_o.split(' ')) == 1:
+                output_file = _o
+        else:
+            print "Error: -o follow wrong argument.\nYour output is more than one file name. please check..."
+            sys.exit(-1)
+    if rev_list.find("-f") >= 0:
+        _f = rev_list[rev_list.find("-f") + 3:]
+        if _f.find("-") >= 0:
+            _f = _f[:_f.find("-") - 1]
+        if len(_f.split(' ')) == 2:
+            _f_tmp = _f.split(' ')
+            lch_arg_A = _f_tmp[0]
+            lch_arg_B = _f_tmp[1]
+        else:
+            print "Error: -f follow wrong argument.\n You must have two argument if you use -f. please check..."
+            sys.exit(-1)
+    if rev_list.find("-m") >= 0:
+        _m = rev_list[rev_list.find("-m") + 3:]
+        if _m.find("-") >= 0:
+            _m = _m[:_m.find("-") - 1]
+        if len(_m.split(' ')) == 3:
+            _m_tmp = _m.split(' ')
+            mch_arg_A = _m_tmp[0]
+            mch_arg_B = _m_tmp[1]
+            mch_arg_C = _m_tmp[2]
+        else:
+            print "Error: -m follow wrong argument.\n You must have three argument if you use -m. please check..."
+            sys.exit(-1)
     
     
     
     
 # main
-
-src_handle = open('GDK-Native01.ommTP.audit.log', 'rU')
-tar_handle = open('record.log', 'w')
-file_end_flag = False
-glb_line = ''
-
-widgets = [Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
-pbar = ProgressBar(widgets=widgets, maxval=100)
+src_handle = open(gl.file_input, 'rU')
+tar_handle = open(gl.file_output, 'w')
 try:
     count()
-    
-    
-    
-    
-    
-    
+    gather_result()    
 finally:
     tar_handle.close()
     src_handle.close()
