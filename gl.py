@@ -6,7 +6,7 @@ list_sed = []
 list_rev = []
 list_OK = []
 
-file_flag = -1
+file_flag = 0
 file_size_tmp = 0
 file_size = 0
 file_input = ''
@@ -18,3 +18,5 @@ Arg_mA = ''
 Arg_mB = ''
 Arg_mC = ''
 
+g_time = 0L
+g_number = -1
