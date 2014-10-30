@@ -1,4 +1,4 @@
-import time, sys
+import time, sys,os
 import gl
 from progressbar import Percentage, ProgressBar, Bar, FormatLabel
 # deal with two list and delete have matched items
@@ -6,14 +6,17 @@ def usage():
     print '''Usage:''' + sys.argv[0] + ''' [-i] input file [-o output file]'''
 
 def right_swich(time):
-    hour = int(time[0:2])
-    minute = int(time[3:5])
-    second = int(time[6:8])
-    other = int(time[9:])
-    result = (hour * 3600 + minute * 60 + second) * 1000000 + other
-    return result
+    if len(time) != 15:
+        return 0
+    else:
+        hour = int(time[0:2])
+        minute = int(time[3:5])
+        second = int(time[6:8])
+        other = int(time[9:])
+        result = (hour * 3600 + minute * 60 + second) * 1000000 + other
+        return result
     
-def abstract_list(line):
+def abstract_list(line):    
     tmp_list = []
     if gl.file_flag == 1:
         tmp = line[line.find(gl.Arg_mA):]
@@ -22,34 +25,39 @@ def abstract_list(line):
         tmp_list.append(line[line.find(gl.Arg_mB):tmp.find(']')])
         tmp = line[line.find(gl.Arg_mC):]
         tmp_list.append(line[line.find(gl.Arg_mC):tmp.find(']')])
-    elif gl.file_flag = 0:
-        tmp = line[line.find(gl.Arg_mA):]
+    elif gl.file_flag == 0:
+        Arg_mA = '|' + gl.Arg_mA + '='
+        Arg_mB = '|' + gl.Arg_mB + '='
+        Arg_mC = '|' + gl.Arg_mC + '='
+        tmp = line[line.find(Arg_mA)+1:]
         if tmp.find('|') >= 0:
-            tmp_list.append(line[line.find(gl.Arg_mA):tmp.find('|')])
+            tmp_list.append(line[line.find(Arg_mA)+1:tmp.find('|') + line.find(Arg_mA)+1])
         else:
-            tmp_list.append(line[line.find(gl.Arg_mA):tmp.find('}')])
-        tmp = line[line.find(gl.Arg_mB):]
+            tmp_list.append(line[line.find(Arg_mA)+1:tmp.find('}') + line.find(Arg_mA)+1])
+        tmp = line[line.find(Arg_mB)+1:]
         if tmp.find('|') >= 0:
-            tmp_list.append(line[line.find(gl.Arg_mB):tmp.find('|')])
-        else:                                  
-            tmp_list.append(line[line.find(gl.Arg_mB):tmp.find('}')])
-        tmp = line[line.find(gl.Arg_mC):]
-        if tmp.find('|') >= 0:
-            tmp_list.append(line[line.find(gl.Arg_mC):tmp.find('|')])
+            tmp_list.append(line[line.find(Arg_mB)+1:tmp.find('|') + line.find(Arg_mB)+1])
         else:
-            tmp_list.append(line[line.find(gl.Arg_mC):tmp.find('}')])
+            tmp_list.append(line[line.find(Arg_mB)+1:tmp.find('}') + line.find(Arg_mB)+1])
+        tmp = line[line.find(Arg_mC)+1:]
+        if tmp.find('|') >= 0:
+            tmp_list.append(line[line.find(Arg_mC)+1:tmp.find('|') + line.find(Arg_mC)+1])
+        else:
+            tmp_list.append(line[line.find(Arg_mC)+1:tmp.find('}') + line.find(Arg_mC)+1])
     return tmp_list
     
 
 def get_time(line):
-#    if gl.file_flag == 0:
-#        tmp_line = line[line.find('AUDIT') - 16:line.find('AUDIT') - 1]
     if gl.file_flag == 1:
+        tmp_line = line[line.find('AUDIT') - 16:line.find('AUDIT') - 1]
+    elif gl.file_flag == 0:
         tmp_line = line[line.find('time') + 5:line.find('time') + 20]
+    else:
+        tmp_line = 0
     return tmp_line
     
 # deal with have chosen items 
-def match_function()
+def match_function():
     list_out_cursor = []
     list_in_cursor = []
     find_OK = False
@@ -58,37 +66,60 @@ def match_function()
         for j in range(len(gl.list_rev)):
             if list_tmp == abstract_list(gl.list_rev[j]):
                 find_OK = True
-                list_in_cursor.append(j)
+                list_in_cursor.insert(0,j)
                 rev_time = get_time(gl.list_rev[j])
+                gl.list_rev[j] = 'DELD'
                 break
         if find_OK:
-            list_out_cursor.append(i)
+            list_out_cursor.insert(0,i)
             find_OK = False
-            sed_time = get_time(list_sed[i])
+            sed_time = get_time(gl.list_sed[i])
+            gl.list_sed[i] = 'DELD'
             list_tmp.append(rev_time)
             list_tmp.append(sed_time)
             gl.list_OK.append(list_tmp)
-    for index in list_out_cursor:
-        del gl.list_sed[index]
-    for index in list_in_cursor:
-        del gl.list_rev[index]
+    for index in range(len(gl.list_rev)-1, -1, -1):
+        if 'DELD' in gl.list_rev[index]:
+            del gl.list_rev[index]
+    for index in range(len(gl.list_sed)-1, -1, -1):
+        if 'DELD' in gl.list_sed[index]:
+            del gl.list_sed[index]
         
 def get_value(string):
-    if gl.file_flag = 1:
+    if gl.file_flag == 1:
         return string[string.find(":")+1:]
-    elif gl.file_flag = 0:
+    elif gl.file_flag == 0:
         return string[string.find("=")+1:]
     else:
         return ''
 def count():
+    rev_num = 0
+    sed_num = 0
     widgets = ['Analysising: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
     pbar = ProgressBar(widgets=widgets, maxval=100)
     file_end_flag = 1
+    flag_jump = 1
     probar = 1
-    print "Begin analysis the log, please waiting...\n"
+    print "Begin analysis the log, please waiting..."
     pbar.start()
     for i in range(1,101):
-        while file_end_flag and probar:
+        if gl.g_time != 0:
+            while flag_jump and file_end_flag and probar:
+                line = src_handle.readline()
+                if len(line) == 0:
+                    file_end_flag = 0
+                else:
+                    gl.file_size_tmp += len(line)
+                if right_swich(get_time(line)) == 0:
+                    pass
+                else:
+                    if right_swich(get_time(line)) > swich_time(gl.g_time):
+                        flag_jump = 0
+                if gl.file_size_tmp > (gl.file_size / 100) * i:
+                    probar = 0
+        else:
+            flag_jump = 0
+        while file_end_flag and probar and not flag_jump:
             line = src_handle.readline()
             if len(line) == 0:
                 file_end_flag = 0
@@ -98,19 +129,26 @@ def count():
                 probar = 0
                 continue
             if line.find(gl.Arg_A) >= 0:
+                sed_num += 1
                 gl.list_sed.append(line)
             if line.find(gl.Arg_B) >= 0:
+                rev_num += 1
                 gl.list_rev.append(line)
-            if len(gl.list_sed) > 100 and len(gl.list_rev) > 100:
+            if sed_num > 100 and rev_num > 100:
                 match_function()
+                rev_num = 0
+                sed_num = 0
             if file_end_flag == 0:
                 match_function()
-                continue
+                rev_num = 0
+                sed_num = 0
+            if gl.g_number != -1 and len(gl.list_OK) > int(gl.g_number):
+                file_end_flag = 0
         pbar.update(i)
         probar = 1
     pbar.finish()
 
-def swich_time(string)
+def swich_time(string):
     tmp = string.split(':')
     if len(tmp) != 3:
         return 0
@@ -133,13 +171,13 @@ def gather_result():
         end_cur = start_cur + gl.g_number
         bar_length = gl.g_number
     widgets = ['Gather result: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
-    pbar = ProgressBar(widgets=widgets, maxval=bar_length))
+    pbar = ProgressBar(widgets=widgets, maxval=bar_length)
     pbar.start()
     diff_time = 0
     glb_line = ''
     for cur_i in range(start_cur,end_cur):
         for cur_j in range(len(gl.list_OK[cur_i]) - 2):
-            glb_line = glbline + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
+            glb_line = glb_line + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
         diff_time = right_swich(gl.list_OK[cur_i][3]) - right_swich(gl.list_OK[cur_i][4])
         if gl.max_time < diff_time:
             gl.max_time = diff_time
@@ -202,7 +240,7 @@ else:
         _t = rev_list[rev_list.find('-t') + 3:]
         if _t.find('-') >= 0:
             _t = _t[:_t.find('-')-1]
-        if !yes_time(_t):
+        if not yes_time(_t):
             gl.g_time = _t
     if rev_list.find('-n') >= 0:
         _n = rev_list[rev_list.find('-n') + 3:]
