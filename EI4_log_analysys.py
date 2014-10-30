@@ -15,13 +15,13 @@ def right_swich(time):
     
 def abstract_list(line):
     tmp_list = []
-    if gl.file_flag = 1:
+    if gl.file_flag == 1:
         tmp = line[line.find(gl.Arg_mA):]
-        tmp_list.append(line[line.find(gl.Arg_mA):tmp.find(']'))
+        tmp_list.append(line[line.find(gl.Arg_mA):tmp.find(']')])
         tmp = line[line.find(gl.Arg_mB):]
-        tmp_list.append(line[line.find(gl.Arg_mB):tmp.find(']'))
+        tmp_list.append(line[line.find(gl.Arg_mB):tmp.find(']')])
         tmp = line[line.find(gl.Arg_mC):]
-        tmp_list.append(line[line.find(gl.Arg_mC):tmp.find(']'))
+        tmp_list.append(line[line.find(gl.Arg_mC):tmp.find(']')])
     elif gl.file_flag = 0:
         tmp = line[line.find(gl.Arg_mA):]
         if tmp.find('|') >= 0:
@@ -163,8 +163,13 @@ def set_gl_arg():
     gl.Arg_mB = 'ask_quote_id'
     gl.Arg_mC = 'feedcode'
 def yes_time(string):
-    
-    
+    hour = int(string[0:2])
+    minute = int(string[3:5])
+    second = int(string[6:8])
+    if hour <= 24 and hour >= 0 and minute < 60 and minute >= 0 and second < 60 and second >= 0:
+        return 0
+    else:
+        return -1    
     
 # user input legal judgement
 if len(sys.argv) < 2:
@@ -197,7 +202,7 @@ else:
         _t = rev_list[rev_list.find('-t') + 3:]
         if _t.find('-') >= 0:
             _t = _t[:_t.find('-')-1]
-        if yes_time(_t):
+        if !yes_time(_t):
             gl.g_time = _t
     if rev_list.find('-n') >= 0:
         _n = rev_list[rev_list.find('-n') + 3:]
