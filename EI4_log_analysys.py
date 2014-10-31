@@ -58,33 +58,35 @@ def get_time(line):
     
 # deal with have chosen items 
 def match_function():
-    list_out_cursor = []
-    list_in_cursor = []
+    list_sed = []
+    list_rev = []
     find_OK = False
     for i in range(len(gl.list_sed)):
         list_tmp = abstract_list(gl.list_sed[i])
         for j in range(len(gl.list_rev)):
             if list_tmp == abstract_list(gl.list_rev[j]):
                 find_OK = True
-                list_in_cursor.insert(0,j)
                 rev_time = get_time(gl.list_rev[j])
                 gl.list_rev[j] = 'DELD'
                 break
         if find_OK:
-            list_out_cursor.insert(0,i)
             find_OK = False
             sed_time = get_time(gl.list_sed[i])
             gl.list_sed[i] = 'DELD'
             list_tmp.append(rev_time)
             list_tmp.append(sed_time)
             gl.list_OK.append(list_tmp)
-    for index in range(len(gl.list_rev)-1, -1, -1):
-        if 'DELD' in gl.list_rev[index]:
-            del gl.list_rev[index]
-    for index in range(len(gl.list_sed)-1, -1, -1):
-        if 'DELD' in gl.list_sed[index]:
-            del gl.list_sed[index]
-        
+    for i in gl.list_sed:
+        if i != 'DELD':
+            list_sed.append(i)
+    gl.list_sed = list_sed[:]
+    del list_sed
+    for j in gl.list_rev:
+        if j != 'DELD':
+            list_rev.append(j)
+    gl.list_rev = list_rev[:]
+    del list_rev
+
 def get_value(string):
     if gl.file_flag == 1:
         return string[string.find(":")+1:]
@@ -92,6 +94,7 @@ def get_value(string):
         return string[string.find("=")+1:]
     else:
         return ''
+
 def count():
     rev_num = 0
     sed_num = 0
