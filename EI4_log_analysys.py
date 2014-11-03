@@ -3,7 +3,7 @@ import gl
 from progressbar import Percentage, ProgressBar, Bar, FormatLabel
 # deal with two list and delete have matched items
 def usage():
-    print '''Usage:''' + sys.argv[0] + ''' [-i] input file [-o output file]'''
+    print 'Usage: ' + sys.argv[0] + ' input file [-o output file] [-t time[xx:xx:xx]] [-n number]'
 
 def right_swich(time):
     if len(time) != 15:
@@ -247,7 +247,8 @@ elif len(sys.argv) < 4:
             gl.file_output = sys.argv[2]
         gl.file_size = os.path.getsize(sys.argv[1])
     else:
-        print "Input file is not effective!"
+        usage()
+        print "ERROR:Input file is not effective!"
         sys.exit(-1)
 else:
     if os.path.isfile(sys.argv[1]):
@@ -255,7 +256,8 @@ else:
         gl.file_output = 'result_record.txt'
         gl.file_size = os.path.getsize(sys.argv[1])
     else:
-        print "Input file is not effective!"
+        usage()
+        print "ERROR:Input file is not effective!"
         sys.exit(-1)
     rev_list = ','.join(sys.argv)
     rev_list = rev_list[rev_list.find(',')+1:]
@@ -269,7 +271,8 @@ else:
         if not yes_time(_t):
             gl.g_time = _t[1:]
         else:
-            print "Your input time is wrong, please check..."
+            usage()
+            print "ERROR:Your input time is wrong, time must like [12:30:15]. please check..."
             sys.exit(-1)
     if rev_list.find('-n') >= 0:
         _n = rev_list[rev_list.find('-n') + 2:]
@@ -281,10 +284,12 @@ else:
             if int(_n) >= 0:
                 gl.g_number = int(_n)
             else:
-                print "Your input number is wrong, please check..."
+                usage()
+                print "ERROR:Your input number is wrong, please check..."
                 sys.exit(-1)
         else:
-            print "Your input number is wrong, please check..."
+            usage()
+            print "ERROR:Your input number is wrong, please check..."
             sys.exit(-1)
     if rev_list.find('-o') >= 0:
         _o = rev_list[rev_list.find('-o') + 2:]
@@ -295,7 +300,8 @@ else:
         if len(_o) != 0:
             gl.file_output = _o
         else:
-            print 'Your output file name is empty, please check...'
+            usage()
+            print 'ERROR:Your output file name is empty, please check...'
             sys.exit(-1)
 
 # main
