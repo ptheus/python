@@ -98,6 +98,7 @@ def get_value(string):
 def count():
     rev_num = 0
     sed_num = 0
+    src_handle = open(gl.file_input, 'rU')
     widgets = ['Analysising: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
     pbar = ProgressBar(widgets=widgets, maxval=100)
     file_end_flag = 1
@@ -105,51 +106,54 @@ def count():
     probar = 1
     print "Begin analysis the log, please waiting..."
     pbar.start()
-    for i in range(1,101):
-        if gl.g_time != 0:
-            while flag_jump and file_end_flag and probar:
+    try:
+        for i in range(1,101):
+            if gl.g_time != 0:
+                while flag_jump and file_end_flag and probar:
+                    line = src_handle.readline()
+                    if len(line) == 0:
+                        file_end_flag = 0
+                    else:
+                        gl.file_size_tmp += len(line)
+                    if right_swich(get_time(line)) == 0:
+                        pass
+                    else:
+                        if right_swich(get_time(line)) > swich_time(gl.g_time):
+                            flag_jump = 0
+                    if gl.file_size_tmp > (gl.file_size / 100) * i:
+                        probar = 0
+            else:
+                flag_jump = 0
+            while file_end_flag and probar and not flag_jump:
                 line = src_handle.readline()
                 if len(line) == 0:
                     file_end_flag = 0
                 else:
                     gl.file_size_tmp += len(line)
-                if right_swich(get_time(line)) == 0:
-                    pass
-                else:
-                    if right_swich(get_time(line)) > swich_time(gl.g_time):
-                        flag_jump = 0
+                if line.find(gl.Arg_A) >= 0:
+                    sed_num += 1
+                    gl.list_sed.append(line)
+                if line.find(gl.Arg_B) >= 0:
+                    rev_num += 1
+                    gl.list_rev.append(line)
+                if sed_num > 100 and rev_num > 100:
+                    match_function()
+                    rev_num = 0
+                    sed_num = 0
+                if file_end_flag == 0:
+                    match_function()
+                    rev_num = 0
+                    sed_num = 0
+                if gl.g_number != -1 and len(gl.list_OK) > int(gl.g_number):
+                    file_end_flag = 0
                 if gl.file_size_tmp > (gl.file_size / 100) * i:
                     probar = 0
-        else:
-            flag_jump = 0
-        while file_end_flag and probar and not flag_jump:
-            line = src_handle.readline()
-            if len(line) == 0:
-                file_end_flag = 0
-            else:
-                gl.file_size_tmp += len(line)
-            if gl.file_size_tmp > (gl.file_size / 100) * i:
-                probar = 0
-                continue
-            if line.find(gl.Arg_A) >= 0:
-                sed_num += 1
-                gl.list_sed.append(line)
-            if line.find(gl.Arg_B) >= 0:
-                rev_num += 1
-                gl.list_rev.append(line)
-            if sed_num > 100 and rev_num > 100:
-                match_function()
-                rev_num = 0
-                sed_num = 0
-            if file_end_flag == 0:
-                match_function()
-                rev_num = 0
-                sed_num = 0
-            if gl.g_number != -1 and len(gl.list_OK) > int(gl.g_number):
-                file_end_flag = 0
-        pbar.update(i)
-        probar = 1
-    pbar.finish()
+                    continue
+            pbar.update(i)
+            probar = 1
+        pbar.finish()
+    finally:
+       src_handle.close() 
 
 def swich_time(string):
     tmp = string.split(':')
@@ -174,27 +178,43 @@ def gather_result():
         end_cur = start_cur + gl.g_number
         bar_length = gl.g_number
     widgets = ['Gather result: ',Percentage(), ' ', Bar(marker='|',left='|',right='|'),'[', FormatLabel('%(elapsed)s'), ']']
+    if gl.g_number == 0 or len(gl.list_OK) == 0:
+        end_cur = 100
+        bar_length = 100
     pbar = ProgressBar(widgets=widgets, maxval=bar_length)
     pbar.start()
     diff_time = 0
     glb_line = ''
-    for cur_i in range(start_cur,end_cur):
-        for cur_j in range(len(gl.list_OK[cur_i]) - 2):
-            glb_line = glb_line + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
-        diff_time = right_swich(gl.list_OK[cur_i][3]) - right_swich(gl.list_OK[cur_i][4])
-        if gl.max_time < diff_time:
-            gl.max_time = diff_time
-        if gl.min_time > diff_time:
-            gl.min_time = diff_time
-        gl.average_time += diff_time
-        glb_line = glb_line + str(diff_time) + '\t\n'
-        tar_handle.write(glb_line)
-        glb_line = ''
-        pbar.update(cur_i)
-    pbar.finish()
-    gl.average_time = gl.average_time / len(gl.list_OK)
+    glb_line_number = 0
+    tar_handle = open(gl.file_output, 'w')
+    try:
+        for cur_i in range(start_cur,end_cur):
+            if gl.g_number == 0 or len(gl.list_OK) == 0:
+                pass
+            else:
+                if cur_i < len(gl.list_OK):
+                    for cur_j in range(len(gl.list_OK[cur_i]) - 2):
+                        glb_line = glb_line + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
+                    diff_time = right_swich(gl.list_OK[cur_i][3]) - right_swich(gl.list_OK[cur_i][4])
+                    if gl.max_time < diff_time:
+                        gl.max_time = diff_time
+                    if gl.min_time > diff_time:
+                        gl.min_time = diff_time
+                    gl.average_time += diff_time
+                    glb_line = glb_line + str(diff_time) + '\t\n'
+                    tar_handle.write(glb_line)
+                    glb_line_number += 1
+                    glb_line = ''
+            pbar.update(cur_i)
+        pbar.finish()
+    finally:
+        tar_handle.close()
+    if gl.g_number == 0 or len(gl.list_OK) == 0:
+        gl.min_time = 0
+    else:
+        gl.average_time = gl.average_time / float(glb_line_number)
     print "--------------------------------"
-    print "%15s%d\n%15s%d\n%15s%d\n%15s%f" %("Total Number:",len(gl.list_OK),"Max_time:", gl.max_time,"Min_time:", gl.min_time,"Average_time:", gl.average_time)
+    print "%15s%d\n%15s%d\n%15s%d\n%15s%f" %("Total Number:",glb_line_number,"Max_time:", gl.max_time,"Min_time:", gl.min_time,"Average_time:", gl.average_time)
     print "--------------------------------"
 # set receive arguments
 def set_gl_arg():
@@ -204,6 +224,8 @@ def set_gl_arg():
     gl.Arg_mB = 'ask_quote_id'
     gl.Arg_mC = 'feedcode'
 def yes_time(string):
+    if len(string) != 8:
+        return -1
     hour = int(string[0:2])
     minute = int(string[3:5])
     second = int(string[6:8])
@@ -238,32 +260,45 @@ else:
     rev_list = ','.join(sys.argv)
     rev_list = rev_list[rev_list.find(',')+1:]
     rev_list = rev_list[rev_list.find(',')+1:]
-    rev_list = rev_list[rev_list.find(',')+1:]
     if rev_list.find('-t') >= 0:
-        _t = rev_list[rev_list.find('-t') + 3:]
+        _t = rev_list[rev_list.find('-t') + 2:]
         if _t.find('-') >= 0:
             _t = _t[:_t.find('-')-1]
+        else:
+            _t = _t[1:]
         if not yes_time(_t):
-            gl.g_time = _t
+            gl.g_time = _t[1:]
+        else:
+            print "Your input time is wrong, please check..."
+            sys.exit(-1)
     if rev_list.find('-n') >= 0:
-        _n = rev_list[rev_list.find('-n') + 3:]
+        _n = rev_list[rev_list.find('-n') + 2:]
         if _n.find('-') >= 0:
-            _n = _n[:_n.find('-')-1]
-        if int(_n) < 100000:
-            gl.g_number = int(_n)
+            _n = _n[1:_n.find('-')-1]
+        else:
+            _n = _n[1:]
+        if type(int(_n)) == type(1):
+            if int(_n) >= 0:
+                gl.g_number = int(_n)
+            else:
+                print "Your input number is wrong, please check..."
+                sys.exit(-1)
+        else:
+            print "Your input number is wrong, please check..."
+            sys.exit(-1)
     if rev_list.find('-o') >= 0:
-        _o = rev_list[rev_list.find('-o') + 3:]
+        _o = rev_list[rev_list.find('-o') + 2:]
         if _o.find('-') >= 0:
-            _o = _o[:_o.find('-')-1]
-        gl.file_output = _o
+            _o = _o[1:_o.find('-')-1]
+        else:
+            _o = _o[1:]
+        if len(_o) != 0:
+            gl.file_output = _o
+        else:
+            print 'Your output file name is empty, please check...'
+            sys.exit(-1)
 
 # main
-src_handle = open(gl.file_input, 'rU')
-tar_handle = open(gl.file_output, 'w')
-try:
-    set_gl_arg()
-    count()
-    gather_result()    
-finally:
-    tar_handle.close()
-    src_handle.close()
+set_gl_arg()
+count()
+gather_result()    
