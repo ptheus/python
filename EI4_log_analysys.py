@@ -3,7 +3,7 @@ import gl
 from progressbar import Percentage, ProgressBar, Bar, FormatLabel
 # deal with two list and delete have matched items
 def usage():
-    print 'Usage: ' + sys.argv[0] + '[Flag:0 or 1] InputFile [-o OutputFile] [-t StartTime[xx:xx:xx]] [-n Number]'
+    print 'Usage: ' + sys.argv[0] + ' InputFile -F 1/2 [-o OutputFile] [-t StartTime[xx:xx:xx]] [-n Number]'
 
 def right_swich(time):
     if len(time) != 15:
@@ -125,7 +125,9 @@ def count():
                     if right_swich(get_time(line)) == 0:
                         pass
                     else:
-                        if right_swich(get_time(line)) > swich_time(gl.g_time):
+                        if right_swich(get_time(line)) > swich_time(gl.g_time) and line.find(gl.Arg_A) >= 0:
+                            sed_num += 1
+                            gl.list_sed.append(line)
                             flag_jump = 0
                     if gl.file_size_tmp > (gl.file_size / 100) * i:
                         probar = 0
@@ -204,12 +206,15 @@ def gather_result():
                 pass
             else:
                 if cur_i < len(gl.list_OK):
-                    for cur_j in range(2):
+                    for cur_j in range(3):
                         glb_line = glb_line + get_value(gl.list_OK[cur_i][cur_j]) + '\t'
                     diff_time = right_swich(gl.list_OK[cur_i][-2]) - right_swich(gl.list_OK[cur_i][-1])
-                    if gl.max_time < diff_time:
+                    if cur_i == 0:
                         gl.max_time = diff_time
-                    if gl.min_time > diff_time:
+                        gl.min_time = diff_time
+                    elif gl.max_time < diff_time:
+                        gl.max_time = diff_time
+                    elif gl.min_time > diff_time:
                         gl.min_time = diff_time
                     gl.average_time += diff_time
                     glb_line = glb_line + str(diff_time) + '\t\n'
@@ -257,49 +262,6 @@ def yes_time(string):
 if len(sys.argv) < 3:
     usage()
     sys.exit(-1)
-#elif len(sys.argv) == 3:
-#    if sys.argv[1] == '1' or sys.argv[1] == '2':
-#        gl.file_flag = int(sys.argv[1])
-#        if os.path.isfile(sys.argv[2]):
-#            gl.file_input = sys.argv[2]
-#            gl.file_output = 'result_record.txt'
-#            gl.file_size = os.path.getsize(sys.argv[2])
-#        else:
-#            print 'ERROR:Input file is not effective, please check...'
-#            usage()
-#            sys.exit(-1)
-#    else:
-#    
-#    
-#        if os.path.isfile(sys.argv[1]):
-#            gl.file_input = sys.argv[1]
-#            gl.file_output = 'result_record.txt'
-#            gl.file_size = os.path.getsize(sys.argv[1])
-#        else:
-#            print 'ERROR:Input file is not effective, please check...'
-#            usage()
-#            sys.exit(-1)
-#    else:
-#        if sys.argv[1] == '1' or sys.argv[1] == '2':
-#            gl.file_flag = int(sys.argv[1])
-#            if os.path.isfile(sys.argv[2]):
-#                gl.file_input = sys.argv[2]
-#                gl.file_output = 'result_record.txt'
-#                gl.file_size = os.path.getsize(sys.argv[2])
-#            else:
-#                print 'ERROR:Input file is not effective, please check...'
-#                usage()
-#                sys.exit(-1)
-#        else:
-#            print 'Warning:Your flag set is not effective, It will be set default 0.'
-#            if os.path.isfile(sys.argv[2]):
-#                gl.file_input = sys.argv[2]
-#                gl.file_output = 'result_record.txt'
-#                gl.file_size = os.path.getsize(sys.argv[2])
-#            else:
-#                print 'ERROR:Input file is not effective, please check...'
-#                usage()
-#                sys.exit(-1)
 else:
     rev_list = ','.join(sys.argv)
     rev_list = rev_list[rev_list.find(',')+1:]
@@ -315,7 +277,7 @@ else:
     if rev_list.find('-t') >= 0:
         _t = rev_list[rev_list.find('-t') + 2:]
         if _t.find('-') >= 0:
-            _t = _t[:_t.find('-')-1]
+            _t = _t[1:_t.find('-')-1]
         else:
             _t = _t[1:]
         if not yes_time(_t):
@@ -330,7 +292,7 @@ else:
             _n = _n[1:_n.find('-')-1]
         else:
             _n = _n[1:]
-        if type(int(_n)) == type(1):
+        if type(int(_n)) == type(1) and int(_n) >= 0:
             if int(_n) >= 0:
                 gl.g_number = int(_n)
             else:
@@ -362,7 +324,7 @@ else:
         if _F == '1' or _F == '2':
             gl.file_flag = int(_F)
         else:
-            print 'ERROR: -F value is\'t effective, please check...'
+            print 'ERROR: -F value isn\'t effective, please check...'
             usage()
             sys.exit(-1)
     else:
